@@ -14,6 +14,8 @@ import android.util.Log;
 
 import com.example.android.pets.data.PetContract.PetEntry;
 
+import static com.example.android.pets.data.PetContract.PetEntry.COLUMN_PET_NAME;
+
 /**
  * Created by jvh on 4/8/2017.
  */
@@ -98,7 +100,7 @@ public class PetProvider extends ContentProvider{
     private Uri insertPet(Uri uri, ContentValues values) {
 
         // Check that the name is not null
-        String name = values.getAsString(PetEntry.COLUMN_PET_NAME);
+        String name = values.getAsString(COLUMN_PET_NAME);
         if (name == null || TextUtils.isEmpty(name)) {
             throw new IllegalArgumentException("Pet requires a name");
         }
@@ -138,8 +140,60 @@ public class PetProvider extends ContentProvider{
         return 0;
     }
 
+    private int updatePet(Uri uri, ContentValues values, String selection, String[] selectionArgs) {
+        // If the {@link PetEntry#Column_PET+NAME} key is present,
+        // check that the name value is not null.
+        if (values.containsKey(PetEntry.COLUMN_PET_NAME)) {
+            String name = values.getAsString(PetEntry.COLUMN_PET_NAME);
+            if (name == null) {
+                throw new IllegalArgumentException("Pet requires a name");
+            }
+        }
+
+        // If the {@link PetEntry.COLUMN_GENDER} key is present,
+        // check that the gender value is valid
+        if (values.containsKey(PetEntry.COLUMN_PET_GENDER)) {
+            Integer gender = values.getAsInteger(PetEntry.COLUMN_PET_GENDER);
+            if (gender == null || !PetEntry.isValidGender(gender)) {
+                throw new IllegalArgumentException("Pet requires a valid gender");
+            }
+        }
+
+        // If the {@link PetEntry.COLUMN_WEIGHT} key is present,
+        // check that the weight value is valid
+        if (values.containsKey(PetEntry.COLUMN_PET_WEIGHT)) {
+            Integer weight = values.getAsInteger(PetEntry.COLUMN_PET_WEIGHT);
+            if (weight != null && weight < 0) {
+                throw new IllegalArgumentException("Pet requires valid weight");
+            }
+        }
+
+        // No need to check the breed, any value is valid (including null)
+
+        // If there are no values to update, then don't try to update the database
+        if (values.size() == 0) {
+            return 0;
+        }
+
+        // Otherwise, get writeable database to update the data
+        SQLiteDatabase db = mDbHelper.getWritableDatabase();
+
+        // Returns the number of database rows affected by the update statement
+        return db.update(PetEntry.TABLE_NAME, values, selection, selectionArgs);
+    }
+
     @Override
-    public int update(@NonNull Uri uri, @Nullable ContentValues values, @Nullable String selection, @Nullable String[] selectionArgs) {
-        return 0;
+    public int update(Uri uri, ContentValues values, String selection, String[] selectionArgs) {
+        final int match = sUriMatcher.match(uri);
+        switch (match) {
+            case PETS:
+                return updatePet(uri, values, selection, selectionArgs);
+            case PET_ID:
+                selection = PetEntry._ID + "=?";
+                selectionArgs = new String[]{String.valueOf(ContentUris.parseId(uri))};
+                return updatePet(uri, values, selection, selectionArgs);
+            default:
+                throw new IllegalArgumentException("Update is not support for " + uri);
+        }
     }
 }
