@@ -18,7 +18,7 @@ package com.example.android.pets;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
@@ -29,14 +29,12 @@ import android.view.View;
 import android.widget.TextView;
 
 import com.example.android.pets.data.PetContract.PetEntry;
-import com.example.android.pets.data.PetDbHelper;
 
 /**
  * Displays list of pets that were entered and stored in the app.
  */
 public class CatalogActivity extends AppCompatActivity {
 
-    private PetDbHelper mDbHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,8 +50,6 @@ public class CatalogActivity extends AppCompatActivity {
                 startActivity(intent);
             }
         });
-
-        mDbHelper = new PetDbHelper(this);
 
         displayDatabaseInfo();
     }
@@ -131,9 +127,6 @@ public class CatalogActivity extends AppCompatActivity {
 
     private void insertPet() {
 
-        // Get the database in write mode
-        SQLiteDatabase db = mDbHelper.getWritableDatabase();
-
         // Create a Content values object where column names are the keys
         // and the pet attributes are the values
         ContentValues values = new ContentValues();
@@ -142,9 +135,8 @@ public class CatalogActivity extends AppCompatActivity {
         values.put(PetEntry.COLUMN_PET_GENDER, PetEntry.GENDER_MALE);
         values.put(PetEntry.COLUMN_PET_WEIGHT, 7);
 
-        // Insert the new row into the pets table, returning the ID of that new row.
-        long newRowId = db.insert(PetEntry.TABLE_NAME, null, values);
-        Log.v("CatalogActivity", "New row inserted with ID: " + newRowId);
+        Uri newUri = getContentResolver().insert(PetEntry.CONTENT_URI, values);
+        Log.v("CatalogActivity", "New row id: " + newUri);
     }
 
     @Override
