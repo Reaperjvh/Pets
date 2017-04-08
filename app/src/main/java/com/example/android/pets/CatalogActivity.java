@@ -68,7 +68,26 @@ public class CatalogActivity extends AppCompatActivity {
 
         SQLiteDatabase db = mDbHelper.getReadableDatabase();
 
-        Cursor cursor = db.rawQuery("SELECT * FROM pets", null);
+        // Define a projection that specifies which columns from the database
+        // you will actually use after this query
+        String[] projection = {
+                PetEntry._ID,
+                PetEntry.COLUMN_PET_NAME,
+                PetEntry.COLUMN_PET_BREED,
+                PetEntry.COLUMN_PET_GENDER,
+                PetEntry.COLUMN_PET_WEIGHT
+        };
+
+        // Perform a query on the pets table
+        Cursor cursor = db.query(
+                PetEntry.TABLE_NAME,    // The table to query
+                projection,             // The columns to return
+                null,                   // The columns for the WHERE clause
+                null,                   // The values for the WHERE clause
+                null,                   // Don't group the rows
+                null,                   // Don't filter by row groups
+                null                    // The sort order
+        );
         try {
             // Display the number of rows in the Cursor
             TextView displayView = (TextView) findViewById(R.id.text_view_pet);
